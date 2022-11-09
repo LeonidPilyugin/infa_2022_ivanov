@@ -25,20 +25,32 @@ HEIGHT = 600
 
 class Movable(metaclass=ABCMeta):
     """Describes a movable object"""
+    x = 0
+    y = 0
+    vx = 0
+    vy = 0
+
     @abstractmethod
     def move(self):
         """Moves object"""
         pass
-    
+
+
 class Drawable(metaclass=ABCMeta):
     """Describes a drawable object"""
+    screen = None
+    color = None
+
     @abstractmethod
     def draw(self):
         """Draws object"""
         pass
-    
+
+
 class Shell(Movable, Drawable, metaclass=ABCMeta):
     """Describes shell"""
+    r = 0
+
     @abstractmethod
     def hittest(self, obj):
         """Checks if this shell crosses obj
@@ -48,9 +60,11 @@ class Shell(Movable, Drawable, metaclass=ABCMeta):
             True if this shell crosses obj, else False
         """
         pass
-    
+
+
 class Target(Movable, Drawable, metaclass=ABCMeta):
     """Describes a target"""
+
     @abstractmethod
     def __init__(self, screen):
         """Constructor of Target class
@@ -58,17 +72,21 @@ class Target(Movable, Drawable, metaclass=ABCMeta):
             screen - pygame surface, on which target is drawn
         """
         pass
-    
+
+
 class PierchingShell(Shell, metaclass=ABCMeta):
     """Describes a pierching shell (hits target on crossing)"""
-    def move(self, t = 1):
+
+    def move(self, t=1):
         """Moves object
         Args:
             t = 1 - proportionately velocity of movement
         """
         # get time to achieve horizontal and vertical borders
-        tx = (WIDTH - self.x - self.r) / self.vx if self.vx > 0 else (-(self.x - self.r) / self.vx if self.vx != 0 else WIDTH)
-        ty = -(HEIGHT - self.y - self.r) / self.vy if self.vy < 0 else ((self.y - self.r) / self.vy if self.vy != 0 else HEIGHT)
+        tx = (WIDTH - self.x - self.r) / self.vx if self.vx > 0 else (
+            -(self.x - self.r) / self.vx if self.vx != 0 else WIDTH)
+        ty = -(HEIGHT - self.y - self.r) / self.vy if self.vy < 0 else (
+            (self.y - self.r) / self.vy if self.vy != 0 else HEIGHT)
 
         # if they are too big, move linearly
         if t < min(tx, ty):
@@ -96,7 +114,7 @@ class PierchingShell(Shell, metaclass=ABCMeta):
     def draw(self):
         """Draws a target"""
         pygame.draw.circle(
-            self.screen,            self.color,
+            self.screen, self.color,
             (self.x, self.y),
             self.r
         )
@@ -108,14 +126,15 @@ class PierchingShell(Shell, metaclass=ABCMeta):
         # check crossing with square objects
         if isinstance(obj, Square):
             return any([abs(point[0] - self.x) < self.r and abs(point[1] - self.y) < self.r
-                        for point in product([obj.x + obj.r/2, obj.x - obj.r/2],
-                                             [obj.y + obj.r/2, obj.y - obj.r/2])]) or \
-                    (abs(self.x - obj.x) < obj.r and abs(self.y - obj.y) < (obj.r + self.r) / 2) or \
-                    (abs(self.y - obj.y) < obj.r and abs(self.x - obj.x) < (obj.r + self.r) / 2)
-    
-    
+                        for point in product([obj.x + obj.r / 2, obj.x - obj.r / 2],
+                                             [obj.y + obj.r / 2, obj.y - obj.r / 2])]) or \
+                   (abs(self.x - obj.x) < obj.r and abs(self.y - obj.y) < (obj.r + self.r) / 2) or \
+                   (abs(self.y - obj.y) < obj.r and abs(self.x - obj.x) < (obj.r + self.r) / 2)
+
+
 class CaliberShell(PierchingShell):
     """Describes a caliber shell (big and slow)"""
+
     def __init__(self, screen: pygame.Surface, x, y):
         """ CaliberShell constructor
 
@@ -138,9 +157,11 @@ class CaliberShell(PierchingShell):
         self.vy = 0
         # color
         self.color = choice(GAME_COLORS)
-    
+
+
 class SubCaliberShell(PierchingShell):
     """Describes SubCaliberShell (small and fast)"""
+
     def __init__(self, screen: pygame.Surface, x, y):
         """ SubCaliberShell constructor
 
@@ -163,11 +184,11 @@ class SubCaliberShell(PierchingShell):
         self.vy = 0
         # color
         self.color = choice(GAME_COLORS)
-    
 
 
 class Gun(Target, metaclass=ABCMeta):
     """Describes gun"""
+
     def __init__(self, screen):
         """Gun constructor"""
         # shell list
@@ -191,8 +212,7 @@ class Gun(Target, metaclass=ABCMeta):
         # velocity
         self.vx = 1
         self.vy = 1
-        
-        
+
     def fire2_start(self, event):
         """Starts fire"""
         self.f2_on = 1
@@ -206,8 +226,8 @@ class Gun(Target, metaclass=ABCMeta):
         global shells
         # add shell
         new_shell = self.shells[randint(0, 1)](self.screen, self.x, self.y)
-        new_shell.x += (self.r + new_shell.r+10) * self.ax / math.hypot(self.ax, self.ay)
-        new_shell.y += (self.r + new_shell.r+10) * self.ay / math.hypot(self.ax, self.ay)
+        new_shell.x += (self.r + new_shell.r + 10) * self.ax / math.hypot(self.ax, self.ay)
+        new_shell.y += (self.r + new_shell.r + 10) * self.ay / math.hypot(self.ax, self.ay)
         new_shell.r += 5
         new_shell.vx = self.f2_power * self.ax / math.hypot(self.ax, self.ay)
         new_shell.vy = - self.f2_power * self.ay / math.hypot(self.ax, self.ay)
@@ -220,7 +240,7 @@ class Gun(Target, metaclass=ABCMeta):
         self.f2_power = 10
 
     @abstractmethod
-    def targetting(self):
+    def targetting(self, obj):
         """Targeting"""
         pass
 
@@ -242,10 +262,11 @@ class Gun(Target, metaclass=ABCMeta):
             self.color = RED
         else:
             self.color = GREY
-            
-            
+
+
 class UserGun(Gun):
     """Describes user's gun (user moves it and shoots by mouse and """
+
     def move(self):
         keys = pygame.key.get_pressed()
         if (keys[pygame.K_UP] or keys[pygame.K_w]) and self.y - self.r > 0:
@@ -261,8 +282,8 @@ class UserGun(Gun):
         """Targeting, depends on mouse position"""
         # set direction
         if event:
-            self.ax = event.pos[0]-self.x
-            self.ay = event.pos[1]-self.y
+            self.ax = event.pos[0] - self.x
+            self.ay = event.pos[1] - self.y
         # set color
         if self.f2_on:
             # targetins
@@ -271,8 +292,10 @@ class UserGun(Gun):
             # not targeting
             self.color = GREY
 
+
 class ComputerGun(Gun):
     """Describes gun """
+
     def move(self):
         pass
 
@@ -284,9 +307,10 @@ class ComputerGun(Gun):
         # set direction
         self.ax = pos[0] - self.x
         self.ay = pos[1] - self.y
-            
+
     def shoot(self):
         """Shoots to user gun"""
+
         # shoot function
         def _shoot():
             self.color = RED
@@ -295,6 +319,7 @@ class ComputerGun(Gun):
                 self.power_up()
             self.fire2_end(None)
             self.color = GREY
+
         # shoot in new thread
         t = threading.Thread(target=_shoot)
         t.daemon = True
@@ -303,6 +328,7 @@ class ComputerGun(Gun):
 
 class Circle(Target):
     """Describes circle target (moves along line, reflects from borders)"""
+
     def __init__(self, screen):
         """Circle constructor
         Args:
@@ -328,8 +354,7 @@ class Circle(Target):
             (self.x, self.y),
             self.r
         )
-        
-    
+
     def move(self):
         # move
         self.x += self.vx
@@ -350,9 +375,11 @@ class Circle(Target):
         if self.y - self.r < 0:
             self.y = 2 * self.r - self.y
             self.vy = -self.vy
-            
+
+
 class Square(Target):
     """Describes square target (stays, oscillating)"""
+
     def __init__(self, screen):
         """Square constructor
         Args:
@@ -376,19 +403,20 @@ class Square(Target):
         pygame.draw.rect(
             self.screen,
             self.color,
-            (self.x - self.r/2, self.y - self.r/2, self.r, self.r),
+            (self.x - self.r / 2, self.y - self.r / 2, self.r, self.r),
             self.r
         )
-        
-    
+
     def move(self):
         # change velocity
         self.v -= self.r - self.R
         # change radius
         self.r += int(self.v * randint(1001, 1100) / 1000)
-        
+
+
 class Bomb(Target):
     """Describes bomb target (stays, on hit spawns 2 targets)"""
+
     def __init__(self, screen):
         """Bomb constructor
         Args:
@@ -403,10 +431,10 @@ class Bomb(Target):
         self.r = 20
         # color
         self.color = BLACK
-        
+
     def move(self):
         pass
-        
+
     def draw(self):
         pygame.draw.circle(
             self.screen,
@@ -414,8 +442,8 @@ class Bomb(Target):
             (self.x, self.y),
             self.r
         )
-        
-    
+
+
 # score counter
 score = 0
 pygame.init()
@@ -443,14 +471,17 @@ targets.extend(guns)
 def mouse_button_down_event_handler(event):
     """MOUSEBUTTONDOWN event handler"""
     gun.fire2_start(event)
-    
+
+
 def mouse_button_up_event_handler(event):
     """MOUSEBUTTONUP event handler"""
     gun.fire2_end(event)
-    
+
+
 def mouse_motion_event_handler(event):
     """MOUSEMOTION event handler"""
     gun.targetting(event)
+
 
 finished = False
 
@@ -466,14 +497,12 @@ while not finished:
         b.draw()
     pygame.display.update()
     clock.tick(FPS)
-    
+
     # in random moment shoot from one gun
     if randint(0, 300) == 0:
         idx = randint(0, 1)
         guns[idx].targetting((gun.x, gun.y))
         guns[idx].shoot()
-        
-        
 
     # process events
     for event in pygame.event.get():
