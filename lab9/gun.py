@@ -524,7 +524,7 @@ while not finished:
                 # if hit yourself, quit
                 if target == gun:
                     finished = True
-                    print("Hit yourself")
+                    print("Hit you")
                     break
                 # spawn target
                 targets.append(TARGET_TYPES[randint(0, 2)](screen))
